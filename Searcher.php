@@ -9,6 +9,7 @@ use lib\data\Text as Text;
 use lib\data\Path as Path;
 use lib\data\Cache as Cache;
 
+define("APP_DEBUG", 1);
 // Define const parameter
 $stopWords = ['i','about','a','an','and','are','as','at','be','by',
     'com','de','en','for','from','have','he','how','in','is','it','la','my','not',
@@ -17,11 +18,11 @@ $stopWords = ['i','about','a','an','and','are','as','at','be','by',
 $roleModel = [1, 0.9, 0.8, 0.7, 0.6];
 
 // Access post parameter
-$page = intval($_POST['page']);
-$page_size = intval($_POST['page_size']);
-$words = $_POST['words'];
+$page = APP_DEBUG ? 1 : intval($_POST['page']);
+$page_size = APP_DEBUG ? 20 : intval($_POST['page_size']);
+$words = 'enter';//APP_DEBUG ? fgets(STDIN) : $_POST['words'];
 if($page < 1 || $page_size*$page >100) return 0;
-
+$time1 = microtime(true);
 // Handle searching string
 $words = strtolower($words);
 $words = str_replace('"','',$words);
@@ -52,11 +53,11 @@ else {
         $role[$key] = in_array($value, $stopWords) ? $role[$key] * 0.01 : $role[$key];
         $result[$key] = $term->get($stem->stem($value));
     }
-
+    
     // Score the result
     foreach ($result as $key => $value) {
         foreach ($value as $k => $v) {
-            $scores[$k] = array_key_exists($scores, $k) ? count($result[$key][$k]) * $role[$key] + $scores[$k]
+            $scores[$k] = array_key_exists($k, $scores) ? count($result[$key][$k]) * $role[$key] + $scores[$k]
                 : count($result[$key][$k]) * $role[$key];
             // Score the sequent key words
             if ($key != 0) {
@@ -69,16 +70,17 @@ else {
     }
     // Get top 100 results
     arsort($scores);
-    $scoreResult = array_slice($scores, 0, 100);
+    $scoreResult = array_slice(array_keys($scores),0,100);
 
+    
     // Make array for storing cache.
     $cache = array();
     foreach ($scoreResult as $key => $value) {
         $temp = array();
-        $temp[0] = $key;
+        $temp[0] = $value;
         $i = 0;
         foreach ($result as $k1 => $v1) {
-            foreach ($v1[$key] as $k2 => $v2) {
+            foreach ($v1[$value] as $k2 => $v2) {
                 array_push($temp, $v2[0]);
                 array_push($temp, $v2[1]);
                 if (++$i > 4) break;
@@ -103,5 +105,12 @@ foreach($show as $key=>$value){
     }
     array_push($return,$temp);
 }
-echo $return;
-
+$time2 = microtime(true);
+if(!APP_DEBUG) echo $return;
+else {
+    foreach($return as $key=>$value){
+	echo $key.' '.$value['path']."\n";
+	foreach($value['preview'] as $k=>$v) echo $v."\n";
+    }	
+}
+if(APP_DEBUG) echo "Total time: ".($time2-$time1)."s\n";

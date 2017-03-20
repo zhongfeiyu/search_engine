@@ -12,9 +12,9 @@ class Base{
     protected $redis;
 
     public function __construct(){
-        $this->redis = new Redis();
-        $this->redis->connect('127.0.0.1');
-        $this->redis->auth('');
+        $this->redis = new \Redis();
+        $this->redis->connect('127.0.0.1',6379);
+	$this->redis->auth('engine');
     }
 }
 
@@ -72,17 +72,17 @@ class Text extends Base{
                 default :
                     $return = '...'.$sentence[$column-2].' '.$sentence[$column-1].' '.$return;
             }
-            switch (sizeof($sentence)-1-$column){
+            switch (sizeof($sentence)-$column-1){
                 case 0:
                     break;
                 case 1:
-                    $return = $return.' '.$sentence[sizeof($sentence)-1];
+                    $return = $return.' '.$sentence[$column+1];
                     break;
                 case 2:
-                    $return = $return.' '.$sentence[sizeof($sentence)-2].' '.$sentence[sizeof($sentence)-1];
+                    $return = $return.' '.$sentence[$column+1].' '.$sentence[$column+2];
                     break;
                 default :
-                    $return = $return.' '.$sentence[sizeof($sentence)-2].' '.$sentence[sizeof($sentence)-1].'...';
+                    $return = $return.' '.$sentence[$column+1].' '.$sentence[$column+2].'...';
             }
             return $return;
         }
