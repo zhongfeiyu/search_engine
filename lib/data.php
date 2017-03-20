@@ -108,18 +108,18 @@ class Path extends Base{
 class Cache extends Base{
     // To query if words are cached
     public function isSearched($word){
-        return $this->redis->hExists('cache', strstr($word,' ', ';'));
+        return $this->redis->hExists('cache', strtr($word,' ', ';'));
     }
 
     public function save($word, $results){
         foreach($results as $key=>$value){
             $temp[$key] = implode('_',$value);
         }
-        $this->redis->hSet('cache',strstr($word,' ', ';'), implode(';',$temp));
+        $this->redis->hSet('cache',strtr($word,' ', ';'), implode(';',$temp));
     }
 
     public function get($word){
-        $cache = $this->redis->hGet('cache', strstr($word,' ', ';'));
+        $cache = $this->redis->hGet('cache', strtr($word,' ', ';'));
         $cache = explode(';',$cache);
         foreach($cache as $key=>$value){
             $return[$key] = explode('_',$value);
