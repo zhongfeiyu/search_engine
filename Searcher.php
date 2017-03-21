@@ -104,7 +104,6 @@ foreach($show as $key=>$value){
     $temp['preview'] = array();
     while(($a = array_shift($value))!=null){
         $b = array_shift($value);
-	array_push($temp['row'],$a);
         array_push($temp['preview'],$text->context($no,$a,$b));
     }
     array_push($return,$temp);

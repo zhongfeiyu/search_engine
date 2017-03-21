@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Searching in Shakespeare</title>
+	<link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+	<script src="http://libs.baidu.com/jquery/1.9.1/jquery.js"></script>
+</head>
+<body>
+	<div id="topdiv"style="margin:0 auto; text-align:center; ">
+		<h2 id="toph">Searching &nbsp;in &nbsp;Shakespeare</h2>
+ 		<div class="input-group">
+      		<input id='topinput' type="text" class="form-control" placeholder="Search for...">
+      		<span class="input-group-btn"><button class="btn btn-primary" type="button" id='topbut'>Go!</button></span>
+    	</div>
+ 	</div>
+ 	<div style="text-align:center;">
+ 		<p>A search engine for works by William Shakespeare</p>
+ 		<p>Project for Advanced Data Structure course. Dataset from <a>http://shakespeare.mit.edu/</a></p>
+ 		<p>Copyright@2017 Some Rights Reserved</p>
+ 	</div>
+</body>
+<script type="text/javascript">
+	$(document).ready(function() { 
+		var wid = $(window).width();
+		var hei = $(window).height();
+		$("#topdiv").css('width',0.5*wid+'px').css('min-height',hei*0.78+'px');
+		$("#toph").css('margin-top',0.1*hei+'px');
+		$(".input-group").css('margin-top',0.2*hei+'px');
+		$("p").css("margin-bottom","5px");
+	}); 
+	$("#topbut").click(function(){
+		var word = $('#topinput').val();
+		if(word == '') return;
+  		$.ajax({
+  			type: 'POST',
+  			url: 'Searcher.php',
+  			data: {
+  				"words": word,
+  				"page": 1,
+  				"page_size": 10,
+  			},
+  			success: function(result){
+  				if(!result) {alert("数据集中没有您想要的结果QAQ！"); return;}
+  				else{
+  					
+  				}
+  			},
+  			error: function(){alert("网络异常");}
+  		});
+
+  	});
+</script>
+</html>
