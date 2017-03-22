@@ -54,13 +54,14 @@ class Text extends Base{
     }
 
     // get context of a word
-    public function context($no, $row, $column){
+    public function context($no, $row, $start, $end){ 
         $text = $this->redis->hGet('text', 'text'.$no);
         if($text != null){
             $text = explode(';',$text);
-            $sentence = explode(' ', $text[$row]);
-            $return = $sentence[$column];
-            switch ($column){
+            $sentence = explode(' ', $text[$row]); 
+            $return = '';
+            for($i = $start;$i<=$end;$i++) $return = $return.' '.$sentence[$i];
+            switch ($start){
                 case 0:
                     break;
                 case 1:
@@ -70,19 +71,19 @@ class Text extends Base{
                     $return = $sentence[0].' '.$sentence[1].' '.$return;
                     break;
                 default :
-                    $return = '...'.$sentence[$column-2].' '.$sentence[$column-1].' '.$return;
+                    $return = '...'.$sentence[$start-2].' '.$sentence[$start-1].' '.$return;
             }
-            switch (sizeof($sentence)-$column-1){
+            switch (sizeof($sentence)-$end-1){
                 case 0:
                     break;
                 case 1:
-                    $return = $return.' '.$sentence[$column+1];
+                    $return = $return.' '.$sentence[$end+1];
                     break;
                 case 2:
-                    $return = $return.' '.$sentence[$column+1].' '.$sentence[$column+2];
+                    $return = $return.' '.$sentence[$end+1].' '.$sentence[$end+2];
                     break;
                 default :
-                    $return = $return.' '.$sentence[$column+1].' '.$sentence[$column+2].'...';
+                    $return = $return.' '.$sentence[$end+1].' '.$sentence[$end+2].'...';
             }
             return $return;
         }

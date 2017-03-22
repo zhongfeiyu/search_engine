@@ -14,8 +14,8 @@ define("LARGE_DATASET",0);
 // Define const parameter
 $stopWords = ['i','about','a','an','and','are','as','at','be','by',
     'com','de','en','for','from','have','he','how','in','is','it','la','my','not',
-    'on','or','of','that','the','this','to','was','what','when',
-    'where','who','will','with','und','the','www','you'];
+    'on','or','of','that','the','this','to','was','what','when','thou'
+    ,'where','who','will','with','und','the','www','you'];
 $roleModel = [1, 0.9, 0.8, 0.7, 0.6];
 
 // Access post parameter
@@ -57,16 +57,20 @@ else {
     }
     
     // Score the result
-    foreach ($result as $key => $value) {
+    foreach ($result as $key => $value){ 
+        if($value == null) continue;
         foreach ($value as $k => $v) {
             $scores[$k] = array_key_exists($k, $scores) ? count($result[$key][$k]) * $role[$key] + $scores[$k]
                 : count($result[$key][$k]) * $role[$key];
             // Score the sequent key words
             if ($key != 0) {
                 foreach ($v as $v2) {
-                    $temp = [$v2[0], $v2[1] - 1];
-                    if (array_key_exists($k, $result[$key-1]) && in_array($temp, $result[$key - 1][$k])) $scores[$k] += $role[$key] * 2 + $role[$key - 1] * 2;
-                }
+                    for($i = 1;$i<=$key;$i++){
+                        $temp = [$v2[0], $v2[1] - $i];
+                        if (array_key_exists($k, $result[$key-$i]) && in_array($temp, $result[$key - $i][$k])) $scores[$k] += $role[$key] * pow(100,$i);
+                        else break;
+                    }
+	        }
             }
         }
     }
@@ -86,7 +90,6 @@ else {
             foreach ($v1[$value] as $k2 => $v2) {
                 array_push($temp, $v2[0]);
                 array_push($temp, $v2[1]);
-                if (++$i > 4) break;
             }
         }
         array_push($cache, $temp);
@@ -102,9 +105,30 @@ foreach($show as $key=>$value){
     $no = array_shift($value);
     $temp['path'] = $path->get($no);
     $temp['preview'] = array();
+    $temp['line'] = array();
+    $previewNo = array();
     while(($a = array_shift($value))!=null){
         $b = array_shift($value);
-        array_push($temp['preview'],$text->context($no,$a,$b));
+        if(array_key_exists($a,$previewNo)) array_push($previewNo[$a],$b);
+	else $previewNo[$a][0] = $b;	
+       // array_push($temp['preview'],$text->context($no,$a,$b));
+    }
+    $times = array();
+    foreach($previewNo as $k=>$v){
+        $times[$k] = count($v);
+        $num = sizeof($v);
+	foreach($v as $t=>$p){
+            for($i = 1; $i< $num;$i++){
+		if($t-$i>0 && $v[$t]-$v[$t-$i] == $i)$times[$k] += min(pow(10,$i),1000);
+		else break;
+            }
+        }
+    }    
+    arsort($times);
+    $countResult = array_slice(array_keys($times),0,5);
+    foreach($countResult as $k=>$v){
+        array_push($temp['line'],$v);
+	array_push($temp['preview'],$text->context($no,$v,min($previewNo[$v]),max($previewNo[$v])));
     }
     array_push($return,$temp);
 }
@@ -113,7 +137,7 @@ if(!APP_DEBUG) echo ['data'=>$return, 'time'=>($time2-$time1)];
 else {
     foreach($return as $key=>$value){
 	echo ($key+1).' '.$value['path']."\n";
-	foreach($value['preview'] as $k=>$v) echo $v."\n";
+	foreach($value['preview'] as $k=>$v) echo 'Row '.$value['line'][$k].":  ".$v."\n";
     }
     echo "Total time: ".($time2-$time1)."s\n";	
 }
