@@ -54,7 +54,11 @@ class Text extends Base{
     }
 
     // get context of a word
-    public function context($no, $row, $start, $end){ 
+    public function context($no, $row, $array){
+        //sort($array);
+        $start = min($array);
+        $end = max($array);
+
         $text = $this->redis->hGet('text', 'text'.$no);
         if($text != null){
             $text = explode(';',$text);
@@ -126,5 +130,24 @@ class Cache extends Base{
             $return[$key] = explode('_',$value);
         }
         return $return;
+    }
+}
+class Num extends Base{
+    public function save($no, $num){
+        $this->redis->hSet('num', 'text'.($no), $num);
+    }
+
+    public function get($no){
+        return $this->redis->hGet('num', 'text'.($no));
+    }
+}
+
+class IDF extends Base{
+    public function save($term, $num){
+        $this->redis->hSet('idf', $term, $num);
+    }
+
+    public function get($term){
+        return $this->redis->hGet('idf', $term);
     }
 }

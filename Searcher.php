@@ -8,14 +8,14 @@ use lib\data\Term as Term;
 use lib\data\Text as Text;
 use lib\data\Path as Path;
 use lib\data\Cache as Cache;
+use lib\data\Num as Num;
+use lib\data\IDF as IDF;
 
 define("APP_DEBUG", 1);
 define("LARGE_DATASET",0);
 // Define const parameter
-$stopWords = ['i','about','a','an','and','are','as','at','be','by',
-    'com','de','en','for','from','have','he','how','in','is','it','la','my','not',
-    'on','or','of','that','the','this','to','was','what','when','thou'
-    ,'where','who','will','with','und','the','www','you'];
+$stopWords = ['i','about','a','an','are','as','at','be','by','com','for','from','how','in','is','it',
+    'on','or','of','that','the','this','to','was','what','when', 'where','who','will','with','the','www'];
 $roleModel = [1, 0.9, 0.8, 0.7, 0.6];
 
 // Access post parameter
@@ -48,30 +48,36 @@ else {
     $exwords = explode(' ', $words);
     $stem = new Stemmer();
     $term = new Term();
+    $num = new Num();
+    $idf = new IDF();
     $scores = array();
     // Score the role, stem the words and get their indexes.
     foreach ($exwords as $key => $value) {
         $role[$key] = $key < 5 ? $roleModel[$key] : 0.5;
-        $role[$key] = in_array($value, $stopWords) ? $role[$key] * 0.01 : $role[$key];
-        $result[$key] = $term->get($stem->stem($value));
+        $role[$key] = in_array($value, $stopWords) ? 0 : $role[$key];
+        $stemmed[$key] = $stem->stem($value);
+        $result[$key] = $term->get($stemmed[$key]);
+        $idfs[$key] = $idf->get($stemmed[$key]);
     }
-    
+
+
     // Score the result
-    foreach ($result as $key => $value){ 
-        if($value == null) continue;
+    foreach ($result as $key => $value) {
+        $length = $num->get($key);
         foreach ($value as $k => $v) {
-            $scores[$k] = array_key_exists($k, $scores) ? count($result[$key][$k]) * $role[$key] + $scores[$k]
-                : count($result[$key][$k]) * $role[$key];
+            $thisScore = $idfs[$key] * count($result[$key][$k])/$length * $role[$key];
             // Score the sequent key words
             if ($key != 0) {
                 foreach ($v as $v2) {
                     for($i = 1;$i<=$key;$i++){
                         $temp = [$v2[0], $v2[1] - $i];
-                        if (array_key_exists($k, $result[$key-$i]) && in_array($temp, $result[$key - $i][$k])) $scores[$k] += $role[$key] * pow(100,$i);
+                        if (array_key_exists($k, $result[$key-$i]) && in_array($temp, $result[$key - $i][$k]))
+                            $thisScore *= pow(2,$i);
                         else break;
                     }
-	        }
+                }
             }
+            $scores[$k] = array_key_exists($k, $scores) ? $thisScore + $scores[$k] : $thisScore;
         }
     }
     // Get top 100 results
@@ -86,7 +92,7 @@ else {
         $temp[0] = $value;
         $i = 0;
         foreach ($result as $k1 => $v1) {
-	if(array_key_exists($value,$v1))	
+	    if(array_key_exists($value,$v1))
             foreach ($v1[$value] as $k2 => $v2) {
                 array_push($temp, $v2[0]);
                 array_push($temp, $v2[1]);
@@ -105,30 +111,27 @@ foreach($show as $key=>$value){
     $no = array_shift($value);
     $temp['path'] = $path->get($no);
     $temp['preview'] = array();
-    $temp['line'] = array();
     $previewNo = array();
     while(($a = array_shift($value))!=null){
         $b = array_shift($value);
         if(array_key_exists($a,$previewNo)) array_push($previewNo[$a],$b);
-	else $previewNo[$a][0] = $b;	
-       // array_push($temp['preview'],$text->context($no,$a,$b));
+	    else $previewNo[$a][0] = $b;
     }
     $times = array();
     foreach($previewNo as $k=>$v){
         $times[$k] = count($v);
         $num = sizeof($v);
-	foreach($v as $t=>$p){
+	    foreach($v as $t=>$p){
             for($i = 1; $i< $num;$i++){
-		if($t-$i>0 && $v[$t]-$v[$t-$i] == $i)$times[$k] += min(pow(10,$i),1000);
-		else break;
+		        if($t-$i>0 && $v[$t]-$v[$t-$i] == $i)$times[$k] += min(pow(10,$i),1000);
+		        else break;
             }
         }
     }    
     arsort($times);
     $countResult = array_slice(array_keys($times),0,5);
     foreach($countResult as $k=>$v){
-        array_push($temp['line'],$v);
-	array_push($temp['preview'],$text->context($no,$v,min($previewNo[$v]),max($previewNo[$v])));
+	    array_push($temp['preview'],$text->context($no,$v,$previewNo[$v]));
     }
     array_push($return,$temp);
 }
@@ -137,7 +140,7 @@ if(!APP_DEBUG) echo ['data'=>$return, 'time'=>($time2-$time1)];
 else {
     foreach($return as $key=>$value){
 	echo ($key+1).' '.$value['path']."\n";
-	foreach($value['preview'] as $k=>$v) echo 'Row '.$value['line'][$k].":  ".$v."\n";
+	foreach($value['preview'] as $k=>$v) echo $v."\n";
     }
     echo "Total time: ".($time2-$time1)."s\n";	
 }
