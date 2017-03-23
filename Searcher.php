@@ -16,7 +16,7 @@ define("LARGE_DATASET",0);
 // Define const parameter
 $stopWords = ['i','about','a','an','are','as','at','be','by','com','for','from','how','in','is','it',
     'on','or','of','that','the','this','to','was','what','when', 'where','who','will','with','the','www'];
-$roleModel = [1, 0.9, 0.8, 0.7, 0.6];
+$roleModel = [100, 90, 80, 70, 60];
 
 // Access post parameter
 $page = APP_DEBUG ? 1 : intval($_POST['page']);
@@ -53,7 +53,7 @@ else {
     $scores = array();
     // Score the role, stem the words and get their indexes.
     foreach ($exwords as $key => $value) {
-        $role[$key] = $key < 5 ? $roleModel[$key] : 0.5;
+        $role[$key] = $key < 5 ? $roleModel[$key] : 50;
         $role[$key] = in_array($value, $stopWords) ? 0 : $role[$key];
         $stemmed[$key] = $stem->stem($value);
         $result[$key] = $term->get($stemmed[$key]);
@@ -63,8 +63,9 @@ else {
 
     // Score the result
     foreach ($result as $key => $value) {
-        $length = $num->get($key);
+        if($role[$key] == 0) continue;
         foreach ($value as $k => $v) {
+            $length = $num->get($k);
             $thisScore = $idfs[$key] * count($result[$key][$k])/$length * $role[$key];
             // Score the sequent key words
             if ($key != 0) {
@@ -72,7 +73,7 @@ else {
                     for($i = 1;$i<=$key;$i++){
                         $temp = [$v2[0], $v2[1] - $i];
                         if (array_key_exists($k, $result[$key-$i]) && in_array($temp, $result[$key - $i][$k]))
-                            $thisScore *= pow(2,$i);
+                            $thisScore *= pow(20,$i);
                         else break;
                     }
                 }

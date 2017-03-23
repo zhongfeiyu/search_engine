@@ -15,11 +15,11 @@ $time1 = microtime(true);
 // Scan every file under directory 'src'.
 $reader = new Reader();
 $total = $reader->scanSrc('src');
-
+$totalNum = 0;
 $termAppear = array();
 foreach($total as $key=>$value){
     echo 'Making Index for '.$value."\n";
-
+    $totalNum++;
     $content = $reader->readOne($value);
     $path = new Path;
     $no = $path->save('http://shakespeare.mit.edu'.substr($value,15));
@@ -47,26 +47,26 @@ foreach($total as $key=>$value){
     // Create and save index.
     $stem = new Stemmer();
     $term = new Term();
-    $flag = 0;
+    $flag = array();
     foreach($content as $k=>$v){
         $temp = explode(' ', $content[$k]);
         foreach($temp as $a=>$b) {
             $stemmed = $stem->stem($b);
             $term->append($stemmed,$no,$k,$a);
-            if(!$flag){
+            if($stemmed != null && !array_key_exists($stemmed,$flag)){
                 if(array_key_exists($stemmed,$termAppear)) $termAppear[$stemmed]++;
-                else $termAppear[$stemmed] = 0;
-                $flag = 1;
+                else $termAppear[$stemmed] = 1;
+                $flag[$stemmed] = 1;
             }
             $num ++;
-	    }
+	    } 
     }
     $n = new Num();
     $n->save($no, $num);
 }
 $idf = new IDF();
 foreach($termAppear as $key=>$value){
-    $idf->save($key,log($no/$value,10));
+    $idf->save($key,log($totalNum/$value,10));
 }
 $time2 = microtime(true);
 echo "Total time: ".($time2-$time1)."s\n";

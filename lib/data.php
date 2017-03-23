@@ -58,7 +58,7 @@ class Text extends Base{
         //sort($array);
         $start = min($array);
         $end = max($array);
-
+        if($end - $start>15) $end = $start+15;
         $text = $this->redis->hGet('text', 'text'.$no);
         if($text != null){
             $text = explode(';',$text);
