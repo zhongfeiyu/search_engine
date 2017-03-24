@@ -11,7 +11,7 @@ use lib\data\Cache as Cache;
 use lib\data\Num as Num;
 use lib\data\IDF as IDF;
 
-define("APP_DEBUG", 1);
+define("APP_DEBUG", 0);
 define("LARGE_DATASET",0);
 // Define const parameter
 $stopWords = ['i','about','a','an','are','as','at','be','by','com','for','from','how','in','is','it',
@@ -137,7 +137,7 @@ foreach($show as $key=>$value){
     array_push($return,$temp);
 }
 $time2 = microtime(true);
-if(!APP_DEBUG) echo json_encode(['data'=>$return, 'time'=>($time2-$time1)]);
+if(!APP_DEBUG) echo json_encode(['data'=>$return, 'time'=>($time2-$time1), 'page'=>$page, 'page_size'=>$page_size, 'total'=>ceil(count($cache)/$page_size)]);
 else {
     foreach($return as $key=>$value){
 	echo ($key+1).' '.$value['path']."\n";

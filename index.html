@@ -6,14 +6,14 @@
 	<script src="http://libs.baidu.com/jquery/1.9.1/jquery.js"></script>
 </head>
 <body>
-	<div id="topdiv" style="margin:0 auto; text-align:center; ">
+	<div id="topdiv"style="margin:0 auto; text-align:center; ">
 		<h1 id="toph">Searching &nbsp;in &nbsp;Shakespeare</h1>
  		<div class="input-group">
       		<input id='topinput' type="text" class="form-control" placeholder="Search for...">
       		<span class="input-group-btn"><button class="btn btn-primary" type="button" id='topbut'>Go!</button></span>
     	</div>
  	</div>
- 	<div id='result' style="margin:0 auto;"></div>
+        <div id='result' style="margin:0 auto;text-align:center;"></div>
  	<div style="text-align:center;">
  		<p>A search engine for works by William Shakespeare</p>
  		<p>Project for Advanced Data Structure course. Dataset from <a>http://shakespeare.mit.edu/</a></p>
@@ -24,7 +24,8 @@
 	$(document).ready(function() { 
 		var wid = $(window).width();
 		var hei = $(window).height();
-		$("#topdiv").css('width',0.5*wid+'px').css('min-height',hei*0.80+'px');
+		$("#topdiv").css('width',0.5*wid+'px').css('min-height',hei*0.78+'px');
+                $('#result').css('width',0.4*wid+'px');
 		$("#toph").css('margin-top',0.1*hei+'px');
 		$(".input-group").css('margin-top',0.2*hei+'px');
 		$("p").css("margin-bottom","0");
@@ -32,32 +33,52 @@
 	$("#topbut").click(function(){
 		var word = $('#topinput').val();
 		if(word == '') return;
+                doAjax(1, 10);
+        });
+         function doAjax(page, page_size){  
+                var word = $('#topinput').val();
+                if(word == '') return;
   		$.ajax({
   			type: 'POST',
   			url: 'Searcher.php',
   			data: {
   				"words": word,
-  				"page": 1,
-  				"page_size": 20,
+  				"page": page,
+  				"page_size": page_size,
   			},
+                        dataType: 'json',
   			success: function(result){
   				if(!result) {alert("数据集中没有您想要的结果QAQ！"); return;}
-  				else{
-  					var data = result['data'];
+  				else
+                                 {
+                                        data = result['data'];
   					var inhtml = '';
+                                        var now = (result['page']-1)*result['page_size'] +1;
+                                        inhtml += "<p style='margin:10px 10px;font-size:20px;'>Time: "+result['time']+'s</p>';
   					for (var i = 0; i < data.length; i++) {
-  						inhtml = inhtml + "<div><p>"+data[i]['path']+"</p><ul>";
+  						inhtml = inhtml + "<div style='text-align:left;margin:30px 15px;'>"+"<a target='_blank' style='text-decoration:none;font-size:20px;' href='"+data[i]['path']+"'>"+data[i]['path']+"</a><ul>";
   						for(var j =0; j<data[i]['preview'].length ;j++){
-  							inhtml = inhtml + '<li>' + data[i]['preview'][j] + '</li>';
+  							inhtml = inhtml + "<li style='margin-top:3px;'>" + data[i]['preview'][j] + '</li>';
   						}
   						inhtml = inhtml + "</ul></div>";
   					};
-  					$('#result').html(inhtml);
+                                        var fenye = "<ul class='pagination'><li><a onclick='doAjax("+'1,'+result['page_size']+")'>&laquo;</a></li>";
+                                        for(var k = 1; k <= result['total']; k++){
+                                                if(k == result.page) fenye += "<li class='disabled'><a>"+k+"</a></li>";
+                                                else fenye += "<li><a onclick='doAjax("+k+','+result['page_size']+")'>"+k+"</a></li>";
+                                        }
+                                        fenye += "<li><a onclick='doAjax("+result['total']+','+result['page_size']+")'>&raquo;</a></li></ul>";
+  					$('#result').html(fenye+inhtml+fenye);
+                                        var wid = $(window).width();
+                                        var hei = $(window).height();
+                                        $('#result').css('margin-bottom',hei*0.2+'px');
+                                        $("#topdiv").css('width',0.5*wid+'px').css('min-height',hei*0.2+'px');
+                                        $("#toph").css('margin-top',0.01*hei+'px');
+                                        $(".input-group").css('margin-top',0.05*hei+'px');
   				}
   			},
   			error: function(){alert("网络异常");}
   		});
-
-  	});
+            }
 </script>
 </html>
