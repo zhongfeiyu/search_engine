@@ -1,7 +1,7 @@
 <?php
 namespace lib\stem;
 /*
- * Stem Library For PHP (From Internet)
+ * 网上找的PHP stem类库
  *
  * Source: http://www.chuggnutt.com/stemmer-source
  */
