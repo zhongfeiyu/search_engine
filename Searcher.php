@@ -137,7 +137,7 @@ foreach($show as $key=>$value){
     array_push($return,$temp);
 }
 $time2 = microtime(true);
-if(!APP_DEBUG) echo ['data'=>$return, 'time'=>($time2-$time1)];
+if(!APP_DEBUG) echo json_encode(['data'=>$return, 'time'=>($time2-$time1)]);
 else {
     foreach($return as $key=>$value){
 	echo ($key+1).' '.$value['path']."\n";

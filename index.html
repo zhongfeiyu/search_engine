@@ -6,13 +6,14 @@
 	<script src="http://libs.baidu.com/jquery/1.9.1/jquery.js"></script>
 </head>
 <body>
-	<div id="topdiv"style="margin:0 auto; text-align:center; ">
-		<h2 id="toph">Searching &nbsp;in &nbsp;Shakespeare</h2>
+	<div id="topdiv" style="margin:0 auto; text-align:center; ">
+		<h1 id="toph">Searching &nbsp;in &nbsp;Shakespeare</h1>
  		<div class="input-group">
       		<input id='topinput' type="text" class="form-control" placeholder="Search for...">
       		<span class="input-group-btn"><button class="btn btn-primary" type="button" id='topbut'>Go!</button></span>
     	</div>
  	</div>
+ 	<div id='result' style="margin:0 auto;"></div>
  	<div style="text-align:center;">
  		<p>A search engine for works by William Shakespeare</p>
  		<p>Project for Advanced Data Structure course. Dataset from <a>http://shakespeare.mit.edu/</a></p>
@@ -23,10 +24,10 @@
 	$(document).ready(function() { 
 		var wid = $(window).width();
 		var hei = $(window).height();
-		$("#topdiv").css('width',0.5*wid+'px').css('min-height',hei*0.78+'px');
+		$("#topdiv").css('width',0.5*wid+'px').css('min-height',hei*0.80+'px');
 		$("#toph").css('margin-top',0.1*hei+'px');
 		$(".input-group").css('margin-top',0.2*hei+'px');
-		$("p").css("margin-bottom","5px");
+		$("p").css("margin-bottom","0");
 	}); 
 	$("#topbut").click(function(){
 		var word = $('#topinput').val();
@@ -37,12 +38,21 @@
   			data: {
   				"words": word,
   				"page": 1,
-  				"page_size": 10,
+  				"page_size": 20,
   			},
   			success: function(result){
   				if(!result) {alert("数据集中没有您想要的结果QAQ！"); return;}
   				else{
-  					
+  					var data = result['data'];
+  					var inhtml = '';
+  					for (var i = 0; i < data.length; i++) {
+  						inhtml = inhtml + "<div><p>"+data[i]['path']+"</p><ul>";
+  						for(var j =0; j<data[i]['preview'].length ;j++){
+  							inhtml = inhtml + '<li>' + data[i]['preview'][j] + '</li>';
+  						}
+  						inhtml = inhtml + "</ul></div>";
+  					};
+  					$('#result').html(inhtml);
   				}
   			},
   			error: function(){alert("网络异常");}
