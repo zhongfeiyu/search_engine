@@ -3,17 +3,16 @@ namespace lib\data;
 /*
  * PHP Lab: Data
  *
- * 读取、储存Redis的数据
+ * Read and save data from redis
  */
 
 /*
  * Class Base
  *
- * Redis的基础连接
+ * Base connection of Redis
  */
 class Base{
     protected $redis;
-
     public function __construct(){
         $this->redis = new \Redis();
         $this->redis->connect('127.0.0.1',6379);
@@ -24,18 +23,18 @@ class Base{
 /*
  * Class Term
  *
- * Hash term 的处理
+ * Handel hash table: term
  */
 class Term extends Base{
 
     /*
      * public append
      *
-     * 添加索引
-     * @param string 词干
-     * @param int    文章编号
-     * @param int    行号
-     * @param int    列号
+     * Add index
+     * @param string Stem
+     * @param int    File number
+     * @param int    Row
+     * @param int    Column
      */
     public function append($term, $file, $row, $column){
         $value = $this->redis->hGet('term',$term);
@@ -46,9 +45,9 @@ class Term extends Base{
     /*
      * public get
      *
-     * 获取某个词干的索引
-     * @param string 词干
-     * @return array 索引的数组
+     * Get indexes of a stem
+     * @param  string  Stem
+     * @return  array  Indexes array
      */
     public function get($term){
         $value = $this->redis->hGet('term',$term);
@@ -68,16 +67,16 @@ class Term extends Base{
 /*
  * Class Text
  *
- * Hash text 的处理
+ * Handel hash table: text
  */
 class Text extends Base{
 
     /*
      * public save
      *
-     * 保存文章
-     * @param int    文章编号
-     * @param array  文章内容 每一个索引是一行
+     * Save content
+     * @param int    File number
+     * @param array  File content
      */
     public function save($no, $content){
         $this->redis->hSet('text', 'text'.$no, implode(';',$content));
@@ -86,13 +85,14 @@ class Text extends Base{
     /*
      * public context
      *
-     * 获取一些词的上下文
-     * @param int    文章编号
-     * @param int    行号
-     * @param array  列号
+     * Get context
+     * @param int    File number
+     * @param int    Row
+     * @param array  Column array
      */
     public function context($no, $row, $array){
-        // 从列号最小的开始，最大的结束，最长15个单词
+        // Start from min column to max column
+        // Max length is 15
         $start = min($array);
         $end = max($array);
         if($end - $start>15) $end = $start+15;
@@ -102,7 +102,7 @@ class Text extends Base{
             $sentence = explode(' ', $text[$row]); 
             $return = '';
             for($i = $start;$i<=$end;$i++) $return = $return.' '.$sentence[$i];
-            // 分析上文
+            // Handle the front half
             switch ($start){
                 case 0:
                     break;
@@ -115,7 +115,7 @@ class Text extends Base{
                 default :
                     $return = '...'.$sentence[$start-2].' '.$sentence[$start-1].' '.$return;
             }
-            // 分析下文
+            // Handle the back half
             switch (sizeof($sentence)-$end-1){
                 case 0:
                     break;
@@ -136,15 +136,15 @@ class Text extends Base{
 /*
  * Class Path
  *
- * Hash path 的处理
+ * Handel hash table: path
  */
 class Path extends Base{
     /*
      * public save
      *
-     * 保存链接
-     * @param  string  网页链接
-     * @return int     文章编号
+     * Save link path
+     * @param  string  Link path
+     * @return int     File number
      */
     public function save($path){
         $now = $this->redis->hLen('path');
@@ -154,9 +154,9 @@ class Path extends Base{
     /*
      * public get
      *
-     * 读取链接
-     * @param  int     文章编号
-     * @return string  网页链接
+     * Get link path
+     * @param  int     File number
+     * @return string  Link path
      */
     public function get($no){
         return $this->redis->hGet('path', 'text'.$no);
@@ -166,14 +166,14 @@ class Path extends Base{
 /*
  * Class Cache
  *
- * Hash cache 的处理
+ * Handel hash table: cache
  */
 class Cache extends Base{
     /*
      * public isSearched
      *
-     * 判断当前搜索词是否有缓存
-     * @param  string  搜索词
+     * If there are results of these words in cache
+     * @param  string  Search words
      * @return bool
      */
     public function isSearched($word){
@@ -182,9 +182,9 @@ class Cache extends Base{
     /*
      * public save
      *
-     * 进行缓存
-     * @param  string  搜索词
-     * @param  array   搜索结果
+     * Make cache
+     * @param  string  Search words
+     * @return array   Search result
      */
     public function save($word, $results){
         foreach($results as $key=>$value){
@@ -195,9 +195,9 @@ class Cache extends Base{
     /*
      * public get
      *
-     * 读取缓存
-     * @param  string  搜索词
-     * @return array   搜索结果
+     * Get cache
+     * @param  string  Search words
+     * @return array   Search result
      */
     public function get($word){
         $cache = $this->redis->hGet('cache', strtr($word,' ', ';'));
@@ -211,15 +211,15 @@ class Cache extends Base{
 /*
  * Class Num
  *
- * Hash num 的处理
+ * Handel hash table: num
  */
 class Num extends Base{
     /*
      * public save
      *
-     * 保存文章长度
-     * @param  int  文章编号
-     * @param  int  文章长度
+     * Save length of a file
+     * @param  int  file number
+     * @param  int  File length
      */
     public function save($no, $num){
         $this->redis->hSet('num', 'text'.($no), $num);
@@ -227,9 +227,9 @@ class Num extends Base{
     /*
      * public get
      *
-     * 获取文章长度
-     * @param  int  文章编号
-     * @return int  文章长度
+     * Get length of a file
+     * @param  int  File number
+     * @return int  File length
      */
     public function get($no){
         return $this->redis->hGet('num', 'text'.($no));
@@ -239,15 +239,15 @@ class Num extends Base{
 /*
  * Class IDF
  *
- * Hash idf 的处理
+ * Handel hash table: idf
  */
 class IDF extends Base{
     /*
      * public save
      *
-     * 保存IDF
-     * @param  string 词干
-     * @param  float  IDF值
+     * Save IDF
+     * @param  string Stem
+     * @param  float  IDF
      */
     public function save($term, $num){
         $this->redis->hSet('idf', $term, $num);
@@ -255,9 +255,9 @@ class IDF extends Base{
     /*
      * public get
      *
-     * 读取IDF
-     * @param  string 词干
-     * @return float  IDF值
+     * Read IDF
+     * @param  string Stem
+     * @return float  IDF
      */
     public function get($term){
         return $this->redis->hGet('idf', $term);

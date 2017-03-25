@@ -1,12 +1,14 @@
 <?php
-
-// 导入类库
+// Import library:
+// stem.php
+// reader.php
+// data.php
 require_once 'lib/stem.php';
 require_once 'lib/reader.php';
 require_once 'lib/data.php';
 
-// 导入命名空间
-// 命名空间所在文件均在lib文件夹下
+// Use namespace
+// All these namespaces come from library
 use lib\stem\Stemmer as Stemmer;
 use lib\reader\reader as Reader;
 use lib\data\Term as Term;
@@ -15,31 +17,37 @@ use lib\data\Path as Path;
 use lib\data\Num as Num;
 use lib\data\IDF as IDF;
 
-// 记录初始时间
+// Record start time
 $time1 = microtime(true);
 
-// 遍历目标文件夹下的所有文件
+// Scan every file under directory src
+// Return filenames
 $reader = new Reader();
 $total = $reader->scanSrc('src');
 
-$totalNum = 0;  // 遍历文章的总数
+// Total num of files
+$totalNum = 0;
+// Array to record how many files a word appear
 $termAppear = array();
 
-// 为目标文件夹下的每一个文件建立索引
+// Make index
+// $key is number, $value is filename.
 foreach($total as $key=>$value){
     echo 'Making Index for '.$value."\n";
     $totalNum++;
-    // 读出文件全部内容
+    // Read the content of file
     $content = $reader->readOne($value);
-    // 把网页链接保存
+    // Save link path for the content
     $path = new Path;
     $no = $path->save('http://shakespeare.mit.edu'.substr($value,15));
 
-    // 处理文件内容
-    // 去除空行和各种标点
+    // Handle file content
+    // $k is row, $v is content in string
     foreach($content as $k=>$v){
+        // Remove Enter
         $content[$k] = str_replace('
 ','',$v);
+        // Remove punctuations
         $content[$k] = str_replace('"','',$content[$k]);
         $content[$k] = str_replace('.','',$content[$k]);
         $content[$k] = str_replace(',','',$content[$k]);
@@ -49,29 +57,36 @@ foreach($total as $key=>$value){
         $content[$k] = str_replace('|','',$content[$k]);
         $content[$k] = str_replace('?','',$content[$k]);
         $content[$k] = str_replace('  ',' ',$content[$k]);
+        // Remove extra space
         if($content[$k] == ' ' || $content[$k] == null) unset($content[$k]);
     }
+    // Now $content is an content array
+    // Every index of $content is a row
     $content = array_merge($content);
     $num = 0;
 
-    // 把处理后的文件内容保存起来
+    // Save handled content.
     $text = new Text;
     $text->save($no,$content);
 
-    // 创建索引
+    // Make index from here
     $stem = new Stemmer();
     $term = new Term();
     $flag = array();
-    // 遍历每一行
+    // Foreach to handle every line
+    // $k is every row, $v is content in string
     foreach($content as $k=>$v){
+        // now $v is an array divided by space
         $temp = explode(' ', $content[$k]);
-        // 遍历每一行中的每一个词
+        // Foreach to handle every word
+        // $a is column, $b is the word
         foreach($temp as $a=>$b) {
-            // 提取词干
+            // Stemming
             $stemmed = $stem->stem($b);
-            // 为词干创建索引
+            // Make index
             $term->append($stemmed,$no,$k,$a);
-            // 统计该词干在多少文章中出现过
+            // Record how many files a word appear
+            // If thw word haven't appear in this file before
             if($stemmed != null && !array_key_exists($stemmed,$flag)){
                 if(array_key_exists($stemmed,$termAppear)) $termAppear[$stemmed]++;
                 else $termAppear[$stemmed] = 1;
@@ -81,17 +96,19 @@ foreach($total as $key=>$value){
 	    } 
     }
 
-    // 保存该文章总长度
+    // Save length of content
     $n = new Num();
     $n->save($no, $num);
 }
 
-// 计算IDF并保存
+// Calculate IDF and save
 $idf = new IDF();
+// Foreach to calculate every IDF of a word
+// $key is word, $value is how many files it appears.
 foreach($termAppear as $key=>$value){
     $idf->save($key,log($totalNum/$value,10));
 }
 
-// 显示总的处理时间
+// Echo total times
 $time2 = microtime(true);
 echo "Total time: ".($time2-$time1)."s\n";

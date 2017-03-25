@@ -1,32 +1,31 @@
 <?php
 namespace lib\reader;
-
 /*
  * Class reader
  *
  * PHP Lib
- * 扫描、读取文件
+ * Scan and read file
  */
 class reader
 {
     /*
      *  public scanSrc
      *
-     *  @return array   目录下所有文件的文件名
-     *  @param  string  要扫描的目录
-     *  @param          DFS的辅助参数，初次调用应为空
+     *  Scan all files under a directory
+     *  @return array   Filenames under this directory
+     *  @param  string  Directory to scan
+     *  @param          Help param of DFS
      */
     public function scanSrc($dir, $total = array())
     {
         if ($handle = opendir($dir)) {
             while (($file = readdir($handle)) !== false) {
                 if ($file != ".." && $file != ".") {
-                    if (is_dir($dir . "/" . $file)) {
-                        // 进行DFS
+                    if (is_dir($dir . "/" . $file))
+                        // Do DFS
                         $total += $this->scanSrc($dir . "/" . $file, $total);
-                    } else {
+                    else
                         array_push($total, $dir . '/' . $file);
-                    }
                 }
             }
             closedir($handle);
@@ -37,8 +36,9 @@ class reader
     /*
      *  public readOne
      *
-     *  @return array   读出文件的所有内容
-     *  @param  string  要扫描的文件名
+     *  Read content of a file
+     *  @return array   Content of the file
+     *  @param  string  Filename
      */
     public function readOne($src)
     {
@@ -46,12 +46,10 @@ class reader
         $content = array();
         while (!feof($file)) {
             array_push($content, fgets($file));
-
         }
         fclose($file);
         return $content;
     }
-
 }
 
 
